@@ -6,8 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// builder.Services.AddValidatorsFromAssemblyContaining<CreateAnimalRequest>();
-
+builder.Services.AddTransient<IValidator<CreateAnimalRequest>,AnimalReauestValidation>();
+builder.Services.AddTransient<IValidator<UpdateAnimalRequest>,AnimalUpdateValidator>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -29,10 +29,6 @@ app.MapGet("/api/animals",(String? sortField)=>
         var sqlCommand = new SqlCommand(query,sqlConnection );
         sqlCommand.Connection.Open();
         var reader = sqlCommand.ExecuteReader();
-        if (!reader.Read())
-        {
-            return Results.NotFound();
-        }
         while (reader.Read())
         {
             animals.Add(new GetAllAnimalsResponse(reader.GetInt32(0),reader.GetString(1),reader.GetString(2),reader.GetString(3),reader.GetString(4)));
@@ -74,7 +70,6 @@ app.MapPut("/api/animals{id:int}",(int id,UpdateAnimalRequest request,IValidator
         sqlCommand.Parameters.AddWithValue("@Description",request.Description);
         sqlCommand.Parameters.AddWithValue("@Category",request.Category);
         sqlCommand.Parameters.AddWithValue("@Area",request.Area);
-        sqlCommand.Parameters.AddWithValue("@id",id);
         sqlCommand.Connection.Open();
         sqlCommand.ExecuteNonQuery();
     }
